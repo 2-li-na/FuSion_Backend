@@ -1,0 +1,617 @@
+const express = require('express');
+const router = express.Router();
+const StepData = require('../models/StepData');
+const UserPoints = require('../models/UserPoints');
+const User = require('../models/User');
+
+// Add step data
+router.post('/steps', async (req, res) => {
+  try {
+    const { username, steps, date, source } = req.body;
+    
+    // Find user ID from username
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    //parsing the date and normalizing to remove time part
+    const stepDate = new Date(date);
+    const startOfDay = new Date(stepDate.getFullYear(), stepDate.getMonth(), stepDate.getDate());
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+
+    console.log(`Upserting steps for ${username} on ${startOfDay.toISOString()}`);
+
+    const updatedStepData = await StepData.findOneAndUpdate(
+      { 
+        userId: user._id, 
+        date: { 
+          $gte: startOfDay, 
+          $lt: endOfDay 
+        } 
+      },
+      { 
+        $set: { 
+          userId: user._id,
+          steps: steps,
+          date: startOfDay,
+          source: source || 'MANUEL'
+        }
+      },
+      { 
+        new: true, 
+        upsert: true, 
+        setDefaultsOnInsert: true 
+      }
+    );
+    console.log(`Step data upserted: ${JSON.stringify(updatedStepData)}`);
+
+    res.status(200).json({
+      message: 'Steps saved successfully',
+      data: updatedStepData
+    });
+
+  } catch (error) {
+    console.error('Error saving steps:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get total steps for a user (all time)
+router.get('/steps/total/:username', async (req, res) => {
+  try {
+    const { username } = req.params;
+    
+    // Find user ID from username
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get all step data for this user
+    const stepData = await StepData.find({ userId: user._id });
+    
+    // Sum up all steps
+    let totalSteps = 0;
+    stepData.forEach(data => {
+      totalSteps += data.steps;
+    });
+
+    res.status(200).json({ username, totalSteps });
+  } catch (error) {
+    console.error('Error fetching total steps:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get step data for a specific day
+router.get('/steps/daily/:username/:date', async (req, res) => {
+  try {
+    const { username, date } = req.params;
+    
+    // Find user ID from username
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Parse date
+    const queryDate = new Date(date);
+    const nextDay = new Date(queryDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    // Find step data for that day
+    const stepData = await StepData.find({
+      userId: user._id,
+      date: { $gte: queryDate, $lt: nextDay }
+    }).sort({ date: 1 });
+
+    // Sum total steps for the day
+    let totalSteps = 0;
+    stepData.forEach(data => {
+      totalSteps += data.steps;
+    });
+
+    res.status(200).json({ date, totalSteps, entries: stepData });
+  } catch (error) {
+    console.error('Error fetching step data:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get weekly step data
+router.get('/steps/weekly/:username', async (req, res) => {
+  try {
+    const { username } = req.params;
+    
+    // Find user ID from username
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get last 7 days of step data
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    // Find step data for the week
+    const stepData = await StepData.find({
+      userId: user._id,
+      date: { $gte: sevenDaysAgo }
+    }).sort({ date: 1 });
+
+    console.log(`Found ${stepData.length} days of data for weekly average`);
+
+    if(stepData.length === 0) {
+      return res.status(200).json({
+        username,
+        averageSteps: 0,
+        daysTracked: 0,
+      });
+    }
+
+    // Calculate average (only count days with data)
+    const totalSteps = stepData.reduce((sum, day) => sum + day.steps, 0);
+    const averageSteps = Math.round(totalSteps / stepData.length);
+
+    res.status(200).json({
+      username,
+      averageSteps,
+      daysTracked: stepData.length,
+      totalSteps
+    });
+  } catch (error) {
+    console.error('Error fetching weekly step data:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Calculate and save weekly points
+router.post('/points/calculate', async (req, res) => {
+  try {
+    const { username, weekStartDate } = req.body;
+    
+    // Find user ID from username
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Calculate start and end of week
+    let weekStart;
+    if (weekStartDate) {
+      weekStart = new Date(weekStartDate);
+    } else {
+      weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Start of current week (Sunday)
+    }
+    
+    weekStart.setHours(0, 0, 0, 0);
+    
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 7); // End of week
+
+    // Find step data for the week
+    const stepData = await StepData.find({
+      userId: user._id,
+      date: { $gte: weekStart, $lt: weekEnd }
+    });
+
+    // Organize by day
+    const dailySteps = {};
+    stepData.forEach(data => {
+      const day = data.date.toISOString().split('T')[0];
+      if (!dailySteps[day]) {
+        dailySteps[day] = 0;
+      }
+      dailySteps[day] += data.steps;
+    });
+
+    // Calculate weekly average
+    let totalSteps = 0;
+    let daysCount = 0;
+    Object.values(dailySteps).forEach(steps => {
+      totalSteps += steps;
+      daysCount++;
+    });
+    
+    const averageSteps = daysCount > 0 ? Math.round(totalSteps / daysCount) : 0;
+
+    // Calculate points based on average steps
+    let pointsEarned = 0;
+    if (averageSteps >= 2000 && averageSteps < 3500) {
+      pointsEarned = 1;
+    } else if (averageSteps >= 3500 && averageSteps < 5000) {
+      pointsEarned = 2;
+    } else if (averageSteps >= 5000 && averageSteps < 6500) {
+      pointsEarned = 3;
+    } else if (averageSteps >= 6500 && averageSteps < 8000) {
+      pointsEarned = 4;
+    } else if (averageSteps >= 8000 && averageSteps < 10000) {
+      pointsEarned = 5;
+    } else if (averageSteps >= 10000 && averageSteps < 11500) {
+      pointsEarned = 6;
+    } else if (averageSteps >= 11500) {
+      pointsEarned = 7;
+    }
+
+    // Find existing points record for this week
+    let userPoints = await UserPoints.findOne({
+      userId: user._id,
+      weekStartDate: weekStart
+    });
+
+    // If not exists, create new record
+    if (!userPoints) {
+      userPoints = new UserPoints({
+        userId: user._id,
+        weekStartDate: weekStart,
+        weekEndDate: weekEnd,
+        averageSteps,
+        pointsEarned,
+        remainingPoints: pointsEarned // Initially, remaining points equals earned points
+      });
+    } else {
+      // Update existing record
+      userPoints.averageSteps = averageSteps;
+      userPoints.pointsEarned = pointsEarned;
+      // Don't update remaining points here as they might have been spent
+    }
+
+    await userPoints.save();
+    
+    res.status(200).json({
+      weekStart: weekStart.toISOString(),
+      weekEnd: weekEnd.toISOString(),
+      averageSteps,
+      pointsEarned,
+      remainingPoints: userPoints.remainingPoints
+    });
+  } catch (error) {
+    console.error('Error calculating points:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get step data for the last 7 days
+router.get('/steps/last-7-days/:username', async (req, res) => {
+  try {
+    const { username } = req.params;
+    
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get last 7 days starting from today
+    const now = new Date();
+    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    
+    const dayOfWeek = todayUTC.getUTCDay(); 
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+    const mondayUTC = new Date(todayUTC);
+    mondayUTC.setUTCDate(todayUTC.getUTCDate() - daysFromMonday);
+    
+    const sundayUTC = new Date(mondayUTC);
+    sundayUTC.setUTCDate(mondayUTC.getUTCDate() + 6);
+
+    console.log(`Week range: ${monday.toISOString()} to ${sunday.toISOString()}`);
+    console.log(`Today (UTC): ${todayUTC.toISOString()}`);
+  
+    // Fetch step data for the last 7 days
+    const stepData = await StepData.find({
+      userId: user._id,
+      date: { $gte: mondayUTC, $lte: todayUTC }
+    }).sort({ date: 1 });
+
+    // German day names
+    const dayNames = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+
+    // Create a map of dates to steps
+    const stepMap = {};
+    stepData.forEach(data => {
+      const dateKey = data.date.toISOString().split('T')[0];
+      stepMap[dateKey] = data.steps;
+    });
+
+    // Build result array for last 7 days
+    const result = [];
+  
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(mondayUTC);
+      date.setUTCDate(mondayUTC.getUTCDate() + i);
+      
+      const dateKey = date.toISOString().split('T')[0];
+      const isFutureDay = date > todayUTC;
+      const steps = isFutureDay ? 0 : (stepMap[dateKey] || 0);
+      
+      result.push({
+        dayName: dayNames[i],
+        date: `${date.getUTCDate().toString().padStart(2, '0')}.${(date.getUTCMonth() + 1).toString().padStart(2, '0')}.${date.getUTCFullYear()}`,
+        steps: steps,
+        isFuture: isFutureDay
+      });
+    }
+    console.log(`Returning ${result.length} days of data`);
+
+    res.status(200).json({ 
+      username, 
+      days: result 
+    });
+
+  } catch (error) {
+    console.error('Error fetching last 7 days:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get monthly step data for the current month
+router.get('/steps/monthly/:username', async (req, res) => {
+  try {
+    const { username } = req.params;
+    
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get first and last day of current month
+    const today = new Date();
+    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    
+    const firstDayOfMonth = new Date(Date.UTC(todayUTC.getUTCFullYear(), todayUTC.getUTCMonth(), 1));
+    const lastDayOfMonth = new Date(Date.UTC(todayUTC.getUTCFullYear(), todayUTC.getUTCMonth() + 1, 0));
+    
+    const daysInMonth = lastDayOfMonth.getUTCDate();
+
+    console.log(`Month range: ${firstDayOfMonth.toISOString()} to ${lastDayOfMonth.toISOString()}`);
+    console.log(`Days in month: ${daysInMonth}`);
+
+    // Fetch step data for the month (only up to today)
+    const stepData = await StepData.find({
+      userId: user._id,
+      date: { $gte: firstDayOfMonth, $lte: todayUTC }
+    }).sort({ date: 1 });
+
+    // German day and month names
+    const dayNames = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+    const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+
+    // Create a map of dates to steps
+    const stepMap = {};
+    stepData.forEach(data => {
+      const dateKey = data.date.toISOString().split('T')[0];
+      stepMap[dateKey] = data.steps;
+    });
+
+    // Build result array for all days in the month
+    const result = [];
+    
+    for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
+      const date = new Date(Date.UTC(todayUTC.getUTCFullYear(), todayUTC.getUTCMonth(), dayNum));
+      const dateKey = date.toISOString().split('T')[0];
+      const isFutureDay = date > todayUTC;
+      
+      const dayOfWeek = date.getUTCDay();
+      const steps = isFutureDay ? 0 : (stepMap[dateKey] || 0);
+      
+      result.push({
+        dayNumber: dayNum,
+        dayName: dayNames[dayOfWeek],
+        monthName: monthNames[todayUTC.getUTCMonth()],
+        date: `${dayNum.toString().padStart(2, '0')}.${(todayUTC.getUTCMonth() + 1).toString().padStart(2, '0')}.${todayUTC.getUTCFullYear()}`,
+        steps: steps,
+        isFuture: isFutureDay
+      });
+    }
+
+    console.log(`Returning ${result.length} days of month data`);
+    
+    res.status(200).json({ 
+      username, 
+      monthName: monthNames[todayUTC.getUTCMonth()],
+      year: todayUTC.getUTCFullYear(),
+      days: result 
+    });
+
+  } catch (error) {
+    console.error('Error fetching monthly data:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get yearly step data for the current year
+router.get('/steps/yearly/:username', async (req, res) => {
+  try {
+    const { username } = req.params;
+    
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth(); // 0 = January, 11 = December
+
+    // Start of year (January 1st)
+    const yearStart = new Date(currentYear, 0, 1);
+    
+    // End of year (December 31st)
+    const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59);
+
+    console.log(`Year range: ${yearStart.toISOString()} to ${yearEnd.toISOString()}`);
+
+    // Fetch all step data for the current year up to today
+    const stepData = await StepData.find({
+      userId: user._id,
+      date: { $gte: yearStart, $lte: today }
+    }).sort({ date: 1 });
+
+    // German month names
+    const monthNames = [
+      'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+      'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
+    ];
+
+    // Create a map of months to total steps
+    const monthStepMap = {};
+    
+    stepData.forEach(data => {
+      const date = new Date(data.date);
+      const monthIndex = date.getMonth();
+      
+      if (!monthStepMap[monthIndex]) {
+        monthStepMap[monthIndex] = 0;
+      }
+      monthStepMap[monthIndex] += data.steps;
+    });
+
+    // Build result array for all 12 months
+    const result = [];
+    
+    for (let i = 0; i < 12; i++) {
+      const isFutureMonth = i > currentMonth;
+      const steps = isFutureMonth ? 0 : (monthStepMap[i] || 0);
+      
+      result.push({
+        monthName: monthNames[i],
+        monthNumber: i + 1,
+        steps: steps,
+        isFuture: isFutureMonth
+      });
+    }
+
+    console.log(`Returning ${result.length} months of data`);
+    
+    res.status(200).json({ 
+      username,
+      year: currentYear,
+      months: result 
+    });
+
+  } catch (error) {
+    console.error('Error fetching monthly data:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get total remaining points for a user
+router.get('/points/total/:username', async (req, res) => {
+  try {
+    const { username } = req.params;
+    
+    // Find user ID from username
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get all points records
+    const pointsRecords = await UserPoints.find({ userId: user._id });
+    
+    // Sum up remaining points
+    let totalPoints = 0;
+    pointsRecords.forEach(record => {
+      totalPoints += record.remainingPoints;
+    });
+
+    res.status(200).json({ username, totalPoints });
+  } catch (error) {
+    console.error('Error fetching total points:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get redeemed rewards history for a user
+router.get('/rewards/history/:username', async (req, res) => {
+  try {
+    const { username } = req.params;
+    
+    // Find user ID from username
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get all reward redemptions (we'll need to create a new model for this)
+    const RewardRedemption = require('../models/RewardRedemption');
+    const redemptions = await RewardRedemption.find({ userId: user._id })
+      .sort({ redeemedAt: -1 }); // Most recent first
+
+    res.status(200).json(redemptions);
+  } catch (error) {
+    console.error('Error fetching reward history:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Redeem points (subtract from total)
+router.post('/points/redeem', async (req, res) => {
+  try {
+    const { username, pointsToRedeem, itemTitle } = req.body;
+    
+    // Find user ID from username
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get all points records
+    const pointsRecords = await UserPoints.find({ 
+      userId: user._id,
+      remainingPoints: { $gt: 0 }
+    }).sort({ weekStartDate: 1 }); // Use oldest points first
+    
+    // Calculate total available points
+    let totalAvailablePoints = 0;
+    pointsRecords.forEach(record => {
+      totalAvailablePoints += record.remainingPoints;
+    });
+
+    // Check if user has enough points
+    if (totalAvailablePoints < pointsToRedeem) {
+      return res.status(400).json({ 
+        message: 'Not enough points',
+        availablePoints: totalAvailablePoints,
+        pointsNeeded: pointsToRedeem 
+      });
+    }
+
+    // Subtract points from records, starting with the oldest
+    let pointsRemaining = pointsToRedeem;
+    for (const record of pointsRecords) {
+      if (pointsRemaining <= 0) break;
+      
+      if (record.remainingPoints <= pointsRemaining) {
+        // Use all points from this record
+        pointsRemaining -= record.remainingPoints;
+        record.remainingPoints = 0;
+      } else {
+        // Use partial points from this record
+        record.remainingPoints -= pointsRemaining;
+        pointsRemaining = 0;
+      }
+      
+      await record.save();
+    }
+
+    res.status(200).json({ 
+      message: 'Points redeemed successfully',
+      redeemedPoints: pointsToRedeem,
+      itemTitle,
+      remainingPoints: totalAvailablePoints - pointsToRedeem
+    });
+  } catch (error) {
+    console.error('Error redeeming points:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+module.exports = router;

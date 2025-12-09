@@ -1,0 +1,326 @@
+.punkte-bearbeiten-page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header styles */
+.punkte-header {
+  background-color: #e8f0e3;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  border-bottom: 2px solid #c5d9b8;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.fusion-logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fusion-text {
+  font-size: 28px;
+  font-weight: 700;
+  color: #4caf50;
+}
+
+.fusion-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.university-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.university-name span {
+  font-weight: 700;
+}
+
+.university-subtitle {
+  font-size: 10px;
+  color: #666;
+  letter-spacing: 0.5px;
+}
+
+.university-logo-small {
+  height: auto;
+  width: auto;
+  margin-top: 5px;
+}
+
+/* Content area */
+.punkte-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+.back-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 25px;
+  cursor: pointer;
+  margin-bottom: 40px;
+  align-self: flex-start;
+  margin-left: 40px;
+  transition: background-color 0.3s;
+}
+
+.back-button:hover {
+  background-color: #45a049;
+}
+
+/* Main edit card */
+.edit-points-card {
+  background-color: #d4e4c8;
+  border: 2px solid #a8c89d;
+  border-radius: 8px;
+  padding: 50px 60px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Form group with autocomplete */
+.form-group {
+  width: 100%;
+  position: relative;
+}
+
+.form-group label {
+  display: block;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.username-input {
+  width: 100%;
+  padding: 12px 15px;
+  font-size: 16px;
+  border: 2px solid #999;
+  border-radius: 4px;
+  background-color: white;
+  color: #666;
+  font-weight: 500;
+}
+
+.username-input:focus {
+  outline: none;
+  border-color: #4caf50;
+}
+
+.username-input::placeholder {
+  color: #999;
+}
+
+/* Autocomplete dropdown */
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 2px solid #4caf50;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f8f0;
+  color: #4caf50;
+}
+
+/* Email display */
+.email-display {
+  width: 100%;
+  text-align: center;
+  color: #2196f3;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 10px 0;
+}
+
+/* Points info text */
+.points-info {
+  width: 100%;
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  margin: 15px 0;
+}
+
+/* Points input */
+.points-input-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.points-input {
+  width: 200px;
+  padding: 15px;
+  font-size: 24px;
+  font-weight: 600;
+  text-align: center;
+  border: 2px solid #999;
+  border-radius: 4px;
+  background-color: white;
+  color: #333;
+}
+
+.points-input:focus {
+  outline: none;
+  border-color: #4caf50;
+}
+
+/* Set points button */
+.set-points-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 14px 40px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 25px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.3s;
+  min-width: 200px;
+}
+
+.set-points-button:hover:not(:disabled) {
+  background-color: #45a049;
+}
+
+.set-points-button:disabled {
+  background-color: #9e9e9e;
+  cursor: not-allowed;
+}
+
+/* Message display */
+.message {
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+  border-radius: 4px;
+  font-weight: 500;
+  margin-top: 10px;
+}
+
+.message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Logout button container */
+.logout-button-container {
+  margin-top: 40px;
+}
+
+.logout-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.logout-button:hover {
+  background-color: #45a049;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .punkte-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .header-left,
+  .header-right {
+    align-items: center;
+  }
+
+  .edit-points-card {
+    padding: 30px 20px;
+    margin: 0 20px;
+  }
+
+  .back-button {
+    margin-left: 20px;
+  }
+
+  .points-info {
+    font-size: 22px;
+  }
+
+  .points-input {
+    width: 150px;
+    font-size: 20px;
+  }
+}

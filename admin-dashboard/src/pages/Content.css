@@ -1,0 +1,72 @@
+.content-page {
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.content-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.content-header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.content-header p {
+  font-size: 18px;
+  color: #666;
+}
+
+/* Category Selection Buttons */
+.category-selection {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 60px;
+}
+
+.category-button {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 40px 60px;
+  font-size: 24px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  min-width: 250px;
+}
+
+.category-button:hover {
+  background: #45a049;
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.category-button:active {
+  transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .content-page {
+    padding: 20px;
+  }
+
+  .category-selection {
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .category-button {
+    width: 100%;
+    max-width: 400px;
+  }
+}

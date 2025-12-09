@@ -1,0 +1,437 @@
+.benutzer-suchen-page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header styling */
+.benutzer-header {
+  background-color: #e8f0e3;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  border-bottom: 2px solid #c5d9b8;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.fusion-logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fusion-text {
+  font-size: 28px;
+  font-weight: 700;
+  color: #4caf50;
+}
+
+.fusion-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.university-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.university-name span {
+  font-weight: 700;
+}
+
+.university-subtitle {
+  font-size: 10px;
+  color: #666;
+  letter-spacing: 0.5px;
+}
+
+.university-logo-small {
+  height: auto;
+  width: auto;
+  margin-top: 5px;
+}
+
+/* Content area */
+.benutzer-content {
+  flex: 1;
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.back-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 25px;
+  cursor: pointer;
+  margin-bottom: 30px;
+  transition: background-color 0.3s;
+}
+
+.back-button:hover {
+  background-color: #45a049;
+}
+
+/* Search Section */
+.search-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  justify-content: center;
+}
+
+.search-container {
+  position: relative;
+  flex: 0 0 600px;
+  max-width: 600px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 15px 20px;
+  font-size: 18px;
+  border: 2px solid #999;
+  border-radius: 4px;
+  background-color: white;
+  color: #999;
+  font-weight: 400;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #4caf50;
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
+/* Autocomplete dropdown */
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 2px solid #4caf50;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f8f0;
+  color: #4caf50;
+}
+
+.search-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 15px 40px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  min-width: 120px;
+}
+
+.search-button:hover:not(:disabled) {
+  background-color: #45a049;
+}
+
+.search-button:disabled {
+  background-color: #9e9e9e;
+  cursor: not-allowed;
+}
+
+/* Message display */
+.message {
+  text-align: center;
+  padding: 15px;
+  border-radius: 4px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* User Info Card */
+.user-info-card {
+  background-color: #d4e4c8;
+  border: 2px solid #a8c89d;
+  border-radius: 8px;
+  padding: 40px 50px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 22px;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #333;
+  min-width: 220px;
+  text-align: right;
+  margin-right: 30px;
+}
+
+.info-value {
+  font-weight: 700;
+  color: #000;
+}
+
+/* Purchase History Section */
+.purchase-history {
+  margin-top: 40px;
+}
+
+.purchase-history h3 {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+/* Purchase Table */
+.purchase-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border: 2px solid #999;
+}
+
+.purchase-table thead {
+  background-color: #4caf50;
+  color: white;
+}
+
+.purchase-table th {
+  padding: 15px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  border: 1px solid #45a049;
+}
+
+.purchase-table tbody tr {
+  border-bottom: 2px solid #333;
+}
+
+.purchase-table tbody tr:last-child {
+  border-bottom: 2px solid #999;
+}
+
+.purchase-table td {
+  padding: 15px;
+  text-align: center;
+  font-size: 16px;
+  color: #333;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+}
+
+.purchase-table td:first-child {
+  border-left: none;
+}
+
+.purchase-table td:last-child {
+  border-right: none;
+}
+
+.no-purchases {
+  padding: 30px !important;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+.edit-button {
+  background-color: #88b980;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.edit-button:hover {
+  background-color: #75a66d;
+}
+
+.delete-button {
+  background-color: #d32f2f;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.delete-button:hover {
+  background-color: #b71c1c;
+}
+
+/* No user selected */
+.no-user-selected {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+  font-size: 18px;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .user-info-card {
+    padding: 30px 20px;
+  }
+
+  .info-row {
+    font-size: 18px;
+  }
+
+  .info-label {
+    min-width: 180px;
+    margin-right: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .benutzer-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .header-left,
+  .header-right {
+    align-items: center;
+  }
+
+  .benutzer-content {
+    padding: 20px;
+  }
+
+  .search-section {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .search-container {
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .search-button {
+    width: 100%;
+  }
+
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 16px;
+    margin-bottom: 15px;
+  }
+
+  .info-label {
+    min-width: auto;
+    text-align: left;
+    margin-right: 0;
+    margin-bottom: 5px;
+  }
+
+  .purchase-table {
+    font-size: 14px;
+  }
+
+  .purchase-table th,
+  .purchase-table td {
+    padding: 10px 5px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .edit-button {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+}
