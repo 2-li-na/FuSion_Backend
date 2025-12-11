@@ -39,9 +39,6 @@ Thumbs.db
 # Android SDK tools 
 platform-tools-latest-windows/
 
-# Frontend folder 
-frontend/
-
 # Python/venv
 .venv/
 venv/
